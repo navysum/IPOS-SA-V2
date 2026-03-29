@@ -47,30 +47,38 @@ export function OrderManagementPage() {
 
   const incompleteCount = orders.filter(o => INCOMPLETE_STATUSES.includes(o.status)).length;
 
-  const handleDispatch = () => {
+  const handleDispatch = async () => {
     if (!dispatchModal) return;
-    updateOrderStatus(dispatchModal.id, 'dispatched', {
-      dispatchedBy: dispatchForm.dispatchedBy,
-      dispatchedAt: new Date().toISOString().split('T')[0],
-      courier: dispatchForm.courier,
-      courierRef: dispatchForm.courierRef,
-      expectedDelivery: dispatchForm.expectedDelivery,
-    });
-    setDispatchModal(null);
+    try {
+      await updateOrderStatus(dispatchModal.id, 'dispatched', {
+        dispatchedBy: dispatchForm.dispatchedBy,
+        dispatchedAt: new Date().toISOString().split('T')[0],
+        courier: dispatchForm.courier,
+        courierRef: dispatchForm.courierRef,
+        expectedDelivery: dispatchForm.expectedDelivery,
+      });
+      setDispatchModal(null);
+    } catch (e) {
+      alert(`Failed to dispatch: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!paymentModal) return;
-    recordPayment({
-      merchantId: paymentModal.merchantId,
-      invoiceId: paymentModal.invoiceId ?? '',
-      amount: parseFloat(paymentForm.amount),
-      method: paymentForm.method as 'bank_transfer' | 'card' | 'cheque',
-      receivedAt: new Date().toISOString().split('T')[0],
-      enteredBy: 'accountant',
-      ref: paymentForm.ref,
-    });
-    setPaymentModal(null);
+    try {
+      await recordPayment({
+        merchantId: paymentModal.merchantId,
+        invoiceId: paymentModal.invoiceId ?? '',
+        amount: parseFloat(paymentForm.amount),
+        method: paymentForm.method as 'bank_transfer' | 'card' | 'cheque',
+        receivedAt: new Date().toISOString().split('T')[0],
+        enteredBy: 'accountant',
+        ref: paymentForm.ref,
+      });
+      setPaymentModal(null);
+    } catch (e) {
+      alert(`Failed to record payment: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
   const cols: TableColumn<Order>[] = [
@@ -98,7 +106,7 @@ export function OrderManagementPage() {
           )}
           {row.status === 'dispatched' && (
             <Button size="sm" variant="ghost" icon={<CheckCircle size={13} />}
-              onClick={(e) => { e.stopPropagation(); markDelivered(row.id); }}>Delivered</Button>
+              onClick={async (e) => { e.stopPropagation(); try { await markDelivered(row.id); } catch (err) { alert(`Failed: ${err instanceof Error ? err.message : String(err)}`); } }}>Delivered</Button>
           )}
           {row.paymentStatus !== 'received' && (row.status === 'delivered' || row.status === 'dispatched') && (
             <Button size="sm" icon={<CreditCard size={13} />}
@@ -228,7 +236,7 @@ export function OrderManagementPage() {
               )}
               {selectedOrder.status === 'dispatched' && (
                 <Button size="sm" variant="ghost" icon={<CheckCircle size={13} />}
-                  onClick={() => markDelivered(selectedOrder.id)}>
+                  onClick={async () => { try { await markDelivered(selectedOrder.id); } catch (err) { alert(`Failed: ${err instanceof Error ? err.message : String(err)}`); } }}>
                   Mark Delivered
                 </Button>
               )}

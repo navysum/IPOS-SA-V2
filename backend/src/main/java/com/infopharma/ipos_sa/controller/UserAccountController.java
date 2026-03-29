@@ -42,11 +42,11 @@ public class UserAccountController {
 
     // POST /api/accounts — create user or merchant account
     @PostMapping
-    public ResponseEntity<CreateUserAccountRequest> createAccount(
+    public ResponseEntity<UserAccount> createAccount(
             @RequestBody CreateUserAccountRequest request) {
         UserAccount userAccount = userAccountMapper.mapFrom(request);
         UserAccount saved = userService.createAccount(userAccount);
-        return new ResponseEntity<>(userAccountMapper.mapTo(saved), HttpStatus.CREATED);
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
     // GET /api/accounts — list all accounts
@@ -123,7 +123,7 @@ public class UserAccountController {
             @RequestBody UpdateDiscountPlanAssignRequest request) {
         try {
             userService.updateDiscountPlan(id, request.getDiscountPlanId());
-            return ResponseEntity.ok().build();
+            return ResponseEntity.noContent().build();
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }

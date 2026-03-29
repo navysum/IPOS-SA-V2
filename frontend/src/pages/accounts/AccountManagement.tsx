@@ -101,66 +101,82 @@ export function AccountManagementPage() {
   const openAdd  = () => { setEditMerchant(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit = (m: Merchant) => { setEditMerchant(m); setForm(merchantToForm(m)); setModalOpen(true); };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.companyName.trim() || !form.email.trim()) return;
     const plan = formToDiscountPlan(form);
     const nextAcct = `ACC${String(merchants.length + 4).padStart(4, '0')}`;
-    if (editMerchant) {
-      updateMerchant(editMerchant.id, {
-        companyName: form.companyName, contactName: form.contactName,
-        address: form.address, city: form.city, postcode: form.postcode,
-        phone: form.phone, fax: form.fax, email: form.email,
-        creditLimit: parseFloat(form.creditLimit), discountPlan: plan,
-        loginUsername: form.loginUsername,
-      });
-    } else {
-      addMerchant({
-        companyName: form.companyName, contactName: form.contactName,
-        address: form.address, city: form.city, postcode: form.postcode,
-        phone: form.phone, fax: form.fax, email: form.email,
-        iposAccount: nextAcct, creditLimit: parseFloat(form.creditLimit),
-        currentBalance: 0, accountStatus: 'normal', discountPlan: plan,
-        createdAt: new Date().toISOString().split('T')[0], paymentDueDays: 30,
-        loginUsername: form.loginUsername,
-      });
+    try {
+      if (editMerchant) {
+        await updateMerchant(editMerchant.id, {
+          companyName: form.companyName, contactName: form.contactName,
+          address: form.address, city: form.city, postcode: form.postcode,
+          phone: form.phone, fax: form.fax, email: form.email,
+          creditLimit: parseFloat(form.creditLimit), discountPlan: plan,
+          loginUsername: form.loginUsername,
+        });
+      } else {
+        await addMerchant({
+          companyName: form.companyName, contactName: form.contactName,
+          address: form.address, city: form.city, postcode: form.postcode,
+          phone: form.phone, fax: form.fax, email: form.email,
+          iposAccount: nextAcct, creditLimit: parseFloat(form.creditLimit),
+          currentBalance: 0, accountStatus: 'normal', discountPlan: plan,
+          createdAt: new Date().toISOString().split('T')[0], paymentDueDays: 30,
+          loginUsername: form.loginUsername,
+        });
+      }
+      setModalOpen(false);
+    } catch (e) {
+      alert(`Failed to save: ${e instanceof Error ? e.message : String(e)}`);
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = (m: Merchant) => {
-    deleteMerchant(m.id);
-    setDeleteConfirm(null);
-    setViewId(null);
+  const handleDelete = async (m: Merchant) => {
+    try {
+      await deleteMerchant(m.id);
+      setDeleteConfirm(null);
+      setViewId(null);
+    } catch (e) {
+      alert(`Failed to delete: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
-  const changeStatus = (id: string, newStatus: AccountStatus) => {
+  const changeStatus = async (id: string, newStatus: AccountStatus) => {
     const merchant = merchants.find(m => m.id === id);
     if (!merchant) return;
     if (merchant.accountStatus === 'in_default' && newStatus === 'normal' && !isManager) {
       alert('Only the Director of Operations (Manager) can restore an In Default account.');
       return;
     }
-    setMerchantStatus(id, newStatus);
+    try {
+      await setMerchantStatus(id, newStatus);
+    } catch (e) {
+      alert(`Failed to update status: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = async () => {
     if (!liveView) return;
     const amt = parseFloat(payAmount);
     if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
     const unpaid = getMerchantInvoices(liveView.id)
       .filter(i => i.paymentStatus !== 'received')
       .sort((a, b) => a.issuedAt.localeCompare(b.issuedAt));
-    recordPayment({
-      merchantId: liveView.id,
-      invoiceId: unpaid[0]?.id ?? '',
-      amount: amt,
-      method: payMethod,
-      receivedAt: new Date().toISOString().split('T')[0],
-      enteredBy: 'accountant',
-      ref: payRef,
-    });
-    setPayAmount('');
-    setPayRef('');
+    try {
+      await recordPayment({
+        merchantId: liveView.id,
+        invoiceId: unpaid[0]?.id ?? '',
+        amount: amt,
+        method: payMethod,
+        receivedAt: new Date().toISOString().split('T')[0],
+        enteredBy: 'accountant',
+        ref: payRef,
+      });
+      setPayAmount('');
+      setPayRef('');
+    } catch (e) {
+      alert(`Failed to record payment: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
   const columns: TableColumn<Merchant>[] = [

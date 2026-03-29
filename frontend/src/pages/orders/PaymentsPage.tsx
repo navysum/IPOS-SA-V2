@@ -25,19 +25,23 @@ export function PaymentsPage() {
 
   const merchantInvoices = invoices.filter(i => i.merchantId === form.merchantId && i.paymentStatus !== 'received');
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.merchantId || !form.amount) return;
-    recordPayment({
-      merchantId: form.merchantId,
-      invoiceId: form.invoiceId,
-      amount: parseFloat(form.amount),
-      method: form.method as 'bank_transfer' | 'card' | 'cheque',
-      receivedAt: new Date().toISOString().split('T')[0],
-      enteredBy: 'accountant',
-      ref: form.ref,
-    });
-    setAddModal(false);
-    setForm({ merchantId: '', invoiceId: '', amount: '', method: 'bank_transfer', ref: '' });
+    try {
+      await recordPayment({
+        merchantId: form.merchantId,
+        invoiceId: form.invoiceId,
+        amount: parseFloat(form.amount),
+        method: form.method as 'bank_transfer' | 'card' | 'cheque',
+        receivedAt: new Date().toISOString().split('T')[0],
+        enteredBy: 'accountant',
+        ref: form.ref,
+      });
+      setAddModal(false);
+      setForm({ merchantId: '', invoiceId: '', amount: '', method: 'bank_transfer', ref: '' });
+    } catch (e) {
+      alert(`Failed to record payment: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
   const totalReceived = payments.reduce((s, p) => s + p.amount, 0);

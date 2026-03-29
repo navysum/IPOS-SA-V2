@@ -4,7 +4,9 @@
  * Backend runs on http://localhost:8080 (Vite proxies /api → 8080).
  */
 
-const BASE = '/api';
+// In development the Vite proxy rewrites /api → localhost:8080.
+// In production (Vercel) set VITE_API_BASE_URL to the Railway backend URL.
+const BASE = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api';
 
 async function request<T>(
   method: string,

@@ -9,7 +9,6 @@ com\infopharma\ipos_sa\repository\StockDeliveryRepository.class
 com\infopharma\ipos_sa\repository\InvoiceRepository.class
 com\infopharma\ipos_sa\service\impl\OrderServiceImpl.class
 com\infopharma\ipos_sa\dto\UpdateMerchantAccountRequest$UpdateMerchantAccountRequestBuilder.class
-com\infopharma\ipos_sa\IposSaApplication.class
 com\infopharma\ipos_sa\entity\Payment.class
 com\infopharma\ipos_sa\entity\CatalogueItem$CatalogueItemBuilder.class
 com\infopharma\ipos_sa\dto\MerchantOrdersSummary$OrderSummaryRow.class
@@ -34,7 +33,6 @@ com\infopharma\ipos_sa\mapper\impl\UserAccountMapper.class
 com\infopharma\ipos_sa\controller\UserAccountController.class
 com\infopharma\ipos_sa\repository\UserAccountRepository.class
 com\infopharma\ipos_sa\entity\OrderItem$OrderItemBuilder.class
-com\infopharma\ipos_sa\config\CorsConfig.class
 com\infopharma\ipos_sa\mapper\impl\DispatchMapper.class
 com\infopharma\ipos_sa\mapper\impl\DiscountTierMapper.class
 com\infopharma\ipos_sa\entity\CatalogueItem.class

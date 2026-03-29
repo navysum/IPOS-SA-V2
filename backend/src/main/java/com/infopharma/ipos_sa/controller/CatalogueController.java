@@ -68,7 +68,7 @@ public class CatalogueController {
             @PathVariable String id,
             @RequestBody StockAddRequest request) {
         catalogueService.addStock(id, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     // DELETE /api/catalogue/{id} — remove item from catalogue

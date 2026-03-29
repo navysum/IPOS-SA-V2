@@ -26,6 +26,7 @@ export function CatalogueManagementPage() {
   const [restockQty, setRestockQty]     = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<CatalogueItem | null>(null);
   const [newItemId, setNewItemId]       = useState('');
+  const [saving, setSaving]             = useState(false);
 
   const filtered = catalogue.filter(
     item => item.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,23 +44,34 @@ export function CatalogueManagementPage() {
     setModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.description.trim()) return;
-    if (editItem) {
-      updateCatalogueItem(editItem.id, form);
-    } else {
-      addCatalogueItem(form, newItemId.trim() || undefined);
+    setSaving(true);
+    try {
+      if (editItem) {
+        await updateCatalogueItem(editItem.id, form);
+      } else {
+        await addCatalogueItem(form, newItemId.trim() || undefined);
+      }
+      setModalOpen(false);
+    } catch (e) {
+      alert(`Failed to save: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
   };
 
-  const handleRestock = () => {
+  const handleRestock = async () => {
     if (!restockModal) return;
     const qty = parseInt(restockQty);
     if (isNaN(qty) || qty <= 0) { alert('Enter a valid quantity.'); return; }
-    restockItem(restockModal.id, qty);
-    setRestockModal(null);
-    setRestockQty('');
+    try {
+      await restockItem(restockModal.id, qty);
+      setRestockModal(null);
+      setRestockQty('');
+    } catch (e) {
+      alert(`Failed to restock: ${e instanceof Error ? e.message : String(e)}`);
+    }
   };
 
   const f = (key: keyof Omit<CatalogueItem, 'id'>, val: string | number | boolean) =>
@@ -152,7 +164,7 @@ export function CatalogueManagementPage() {
       <Modal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Delete Catalogue Item" width={380}
         footer={<>
           <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-          <Button variant="danger" icon={<Trash2 size={14} />} onClick={() => { if (deleteConfirm) { deleteCatalogueItem(deleteConfirm.id); setDeleteConfirm(null); } }}>Delete</Button>
+          <Button variant="danger" icon={<Trash2 size={14} />} onClick={async () => { if (deleteConfirm) { try { await deleteCatalogueItem(deleteConfirm.id); setDeleteConfirm(null); } catch (e) { alert(`Failed to delete: ${e instanceof Error ? e.message : String(e)}`); } } }}>Delete</Button>
         </>}
       >
         {deleteConfirm && (
@@ -167,7 +179,7 @@ export function CatalogueManagementPage() {
         title={editItem ? `Edit: ${editItem.description}` : 'Add Catalogue Item'} width={560}
         footer={<>
           <Button variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleSave}>{editItem ? 'Save Changes' : 'Add Item'}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : editItem ? 'Save Changes' : 'Add Item'}</Button>
         </>}
       >
         {editItem && editItem.availability < editItem.stockLimit && (
