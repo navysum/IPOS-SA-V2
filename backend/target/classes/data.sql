@@ -170,6 +170,18 @@ BEGIN
         VALUES ('100004', 'IP0004', 10, '2026-01-29', 1750.00);
     -- No payment — HelloPharmacy balance = 1750.00, account SUSPENDED
 
+    -- ── PU Commercial Applications ───────────────────────────
+    INSERT INTO pu_applications
+      (application_id, type, email, submitted_at, status,
+       company_name, company_house_reg, director_name, business_type, address)
+    VALUES
+      ('PU0003', 'commercial', 'pondPharma@example.com', '2026-01-15', 'PENDING',
+       'Pond Pharmacy', 'UK10003429CompH', 'Not provided', 'Pharmacy',
+       'Chislehurst, 25 High Street, BR7 5BN'),
+      ('PU-COM-002', 'commercial', 'meds@rapidhealth.co.uk', '2026-02-01', 'PENDING',
+       'Rapid Health Ltd', 'UK20045611CompH', 'Ms Sarah Barnes', 'Online Pharmacy',
+       '8 Commerce Park, Bristol BS1 4AB');
+
     -- ── Stock Deliveries (feeds stock turnover report) ────────
     INSERT INTO stock_deliveries (item_id, quantity_received, delivery_date, recorded_by) VALUES
         ('100 00001', 2000, '2026-01-05', 'warehouse1'),
