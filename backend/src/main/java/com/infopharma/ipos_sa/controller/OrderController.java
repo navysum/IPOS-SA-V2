@@ -53,6 +53,13 @@ public class OrderController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // PUT /api/orders/{id}/process — mark order as being processed (accepted → being_processed)
+    @PutMapping("/{id}/process")
+    public ResponseEntity<Order> processOrder(@PathVariable String id) {
+        Order updated = orderService.markBeingProcessed(id);
+        return ResponseEntity.ok(updated);
+    }
+
     // PUT /api/orders/{id}/dispatch — mark order as dispatched (staff action)
     @PutMapping("/{id}/dispatch")
     public ResponseEntity<Order> dispatchOrder(

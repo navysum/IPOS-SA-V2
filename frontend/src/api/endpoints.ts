@@ -52,13 +52,14 @@ export const catalogueApi = {
 
 // ── Orders ───────────────────────────────────────────────────
 export const ordersApi = {
-  getAll:       ()              => api.get<ApiOrder[]>('/orders'),
-  getIncomplete:()              => api.get<ApiOrder[]>('/orders/incomplete'),
-  getByAccount: (accountId: number) => api.get<ApiOrder[]>(`/orders/my?accountId=${accountId}`),
-  getOne:       (id: string)    => api.get<ApiOrder>(`/orders/${id}`),
-  place:        (body: unknown) => api.post<ApiOrder>('/orders', body),
-  dispatch:     (id: string, body: unknown) => api.put<ApiOrder>(`/orders/${id}/dispatch`, body),
-  markDelivered:(id: string)    => api.put<ApiOrder>(`/orders/${id}/delivered`),
+  getAll:            ()              => api.get<ApiOrder[]>('/orders'),
+  getIncomplete:     ()              => api.get<ApiOrder[]>('/orders/incomplete'),
+  getByAccount:      (accountId: number) => api.get<ApiOrder[]>(`/orders/my?accountId=${accountId}`),
+  getOne:            (id: string)    => api.get<ApiOrder>(`/orders/${id}`),
+  place:             (body: unknown) => api.post<ApiOrder>('/orders', body),
+  markBeingProcessed:(id: string)    => api.put<ApiOrder>(`/orders/${id}/process`),
+  dispatch:          (id: string, body: unknown) => api.put<ApiOrder>(`/orders/${id}/dispatch`, body),
+  markDelivered:     (id: string)    => api.put<ApiOrder>(`/orders/${id}/delivered`),
 };
 
 // ── Invoices ─────────────────────────────────────────────────
@@ -77,6 +78,23 @@ export const paymentsApi = {
     paymentMethod: 'BANK_TRANSFER' | 'CARD' | 'CHEQUE';
     recordedBy?: string;
   }) => api.post<ApiPayment>('/payments', body),
+};
+
+// ── PU Applications ──────────────────────────────────────────
+export const puApplicationsApi = {
+  getAll:   ()                          => api.get<any[]>('/pu-applications'),
+  create:   (body: unknown)             => api.post<any>('/pu-applications', body),
+  decide:   (id: string, body: { status: string; notes?: string; processedBy?: string }) =>
+    api.put<any>(`/pu-applications/${id}/decision`, body),
+};
+
+// ── Monthly Discounts (FLEXIBLE plan settlement) ─────────────
+export const monthlyDiscountsApi = {
+  getAll:    ()                => api.get<any[]>('/monthly-discounts'),
+  getPending:()                => api.get<any[]>('/monthly-discounts/pending'),
+  calculate: (month: string)   => api.post<any[]>(`/monthly-discounts/calculate?month=${month}`),
+  settle:    (id: number, body: { settlementMethod: string }) =>
+    api.put<any>(`/monthly-discounts/${id}/settle`, body),
 };
 
 // ── Reports ──────────────────────────────────────────────────

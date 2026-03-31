@@ -23,8 +23,8 @@ export function PUApplicationsPage() {
   const approved = puApps.filter(a => a.status === 'approved').length;
   const rejected = puApps.filter(a => a.status === 'rejected').length;
 
-  const makeDecision = (app: PUApplication, status: 'approved' | 'rejected') => {
-    processPUApp(app.id, status, notes, user?.username ?? 'manager');
+  const makeDecision = async (app: PUApplication, status: 'approved' | 'rejected') => {
+    await processPUApp(app.id, status, notes, user?.username ?? 'manager');
     setViewApp(null);
     setNotes('');
   };

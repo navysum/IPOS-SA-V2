@@ -3,7 +3,7 @@
 Full-stack project:  
 - **frontend/** — React 18 + TypeScript + Vite  
 - **backend/**  — Spring Boot 4 + PostgreSQL + JPA
-
+- **Supabase Password/** - lDTKeWUN49Kvqrui
 ---
 
 

@@ -14,6 +14,7 @@ public interface OrderService {
     List<Order> findByAccountId(Long accountId);
     /** Returns orders not yet delivered (accepted / being_processed / dispatched) */
     List<Order> findIncomplete();
+    Order markBeingProcessed(String orderId);
     Order dispatch(String orderId, DispatchRequest request);
     Order markDelivered(String orderId);
 }

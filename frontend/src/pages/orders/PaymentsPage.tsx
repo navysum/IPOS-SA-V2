@@ -6,10 +6,12 @@ import { Table } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { Modal, Field, Input, Select } from '@/components/ui/Modal';
 import { useAppData } from '@/context/AppDataContext';
+import { useAuth } from '@/context/AuthContext';
 import type { TableColumn } from '@/types';
 
 export function PaymentsPage() {
   const { payments, merchants, invoices, recordPayment } = useAppData();
+  const { user } = useAuth();
 
   const [search, setSearch] = useState('');
   const [addModal, setAddModal] = useState(false);
@@ -34,7 +36,7 @@ export function PaymentsPage() {
         amount: parseFloat(form.amount),
         method: form.method as 'bank_transfer' | 'card' | 'cheque',
         receivedAt: new Date().toISOString().split('T')[0],
-        enteredBy: 'accountant',
+        enteredBy: user?.username ?? 'accountant',
         ref: form.ref,
       });
       setAddModal(false);

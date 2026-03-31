@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface CatalogueItemRepository extends JpaRepository<CatalogueItem, String> {
     List<CatalogueItem> findByDescriptionContainingIgnoreCase(String keyword);
+    List<CatalogueItem> findByItemIdContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String itemId, String description);
     List<CatalogueItem> findByAvailabilityLessThan(int threshold);
 }

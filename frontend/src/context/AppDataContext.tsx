@@ -25,11 +25,13 @@ import type {
 } from '@/types';
 import {
   accountsApi, catalogueApi, ordersApi, invoicesApi, paymentsApi, discountPlansApi,
+  puApplicationsApi,
 } from '@/api/endpoints';
 import {
   adaptAccount, adaptCatalogueItem, adaptOrder, adaptInvoice,
   catalogueItemToApi,
 } from '@/api/adapters';
+import { useAuth } from '@/context/AuthContext';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
@@ -88,25 +90,26 @@ async function syncDiscountPlan(
 }
 
 // ─────────────────────────────────────────────────────────────
-// STATIC PU APPS (no backend endpoint exists)
+// PU APP ADAPTER
 // ─────────────────────────────────────────────────────────────
 
-const STATIC_PU_APPS: PUApplication[] = [
-  {
-    id: 'PU0003', type: 'commercial', email: 'pondPharma@example.com',
-    submittedAt: '2026-01-15', status: 'pending',
-    companyName: 'Pond Pharmacy', companyHouseReg: 'UK10003429CompH',
-    directorName: 'Not provided', businessType: 'Pharmacy',
-    address: 'Chislehurst, 25 High Street, BR7 5BN',
-  },
-  {
-    id: 'PU-COM-002', type: 'commercial', email: 'meds@rapidhealth.co.uk',
-    submittedAt: '2026-02-01', status: 'pending',
-    companyName: 'Rapid Health Ltd', companyHouseReg: 'UK20045611CompH',
-    directorName: 'Ms Sarah Barnes', businessType: 'Online Pharmacy',
-    address: '8 Commerce Park, Bristol BS1 4AB',
-  },
-];
+function adaptPUApp(raw: any): PUApplication {
+  return {
+    id:              raw.applicationId,
+    type:            raw.type as 'commercial' | 'non_commercial',
+    email:           raw.email,
+    submittedAt:     raw.submittedAt,
+    status:          raw.status?.toLowerCase() as PUApplication['status'],
+    companyName:     raw.companyName,
+    companyHouseReg: raw.companyHouseReg,
+    directorName:    raw.directorName,
+    businessType:    raw.businessType,
+    address:         raw.address,
+    notes:           raw.notes,
+    processedBy:     raw.processedBy,
+    processedAt:     raw.processedAt,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────
 // CONTEXT TYPES
@@ -144,7 +147,7 @@ export interface AppDataContextValue {
 
   recordPayment: (p: Omit<Payment, 'id'>) => Promise<void>;
 
-  processPUApp: (id: string, status: 'approved' | 'rejected', notes?: string, by?: string) => void;
+  processPUApp: (id: string, status: 'approved' | 'rejected', notes?: string, by?: string) => Promise<void>;
 
   getMerchantById:    (id: string) => Merchant | undefined;
   getMerchantOrders:  (merchantId: string) => Order[];
@@ -161,12 +164,17 @@ export interface AppDataContextValue {
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const isMerchant = user?.role === 'merchant';
+  // Backend accountId for the currently logged-in merchant (null for staff)
+  const merchantAccountId = isMerchant && user?.id ? parseInt(user.id, 10) : null;
+
   const [merchants,  setMerchants]  = useState<Merchant[]>([]);
   const [catalogue,  setCatalogue]  = useState<CatalogueItem[]>([]);
   const [orders,     setOrders]     = useState<Order[]>([]);
   const [invoices,   setInvoices]   = useState<Invoice[]>([]);
   const [payments,   setPayments]   = useState<Payment[]>([]);
-  const [puApps,     setPuApps]     = useState<PUApplication[]>(STATIC_PU_APPS);
+  const [puApps,     setPuApps]     = useState<PUApplication[]>([]);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState<string | null>(null);
 
@@ -174,8 +182,14 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   const loadAccounts = useCallback(async () => {
     const raw = await accountsApi.getAll();
-    setMerchants(raw.filter(a => a.accountType === 'MERCHANT').map(adaptAccount));
-  }, []);
+    // Merchants only see their own account; staff see all merchant accounts
+    const merchantAccounts = raw.filter(a => a.accountType === 'MERCHANT');
+    if (merchantAccountId) {
+      setMerchants(merchantAccounts.filter(a => a.accountId === merchantAccountId).map(adaptAccount));
+    } else {
+      setMerchants(merchantAccounts.map(adaptAccount));
+    }
+  }, [merchantAccountId]);
 
   const loadCatalogue = useCallback(async () => {
     const raw = await catalogueApi.getAll();
@@ -183,10 +197,16 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadOrdersAndInvoices = useCallback(async () => {
-    const [rawOrders, rawInvoices] = await Promise.all([
-      ordersApi.getAll(),
-      invoicesApi.getAll(),
-    ]);
+    // Merchants only see their own orders and invoices
+    const [rawOrders, rawInvoices] = merchantAccountId
+      ? await Promise.all([
+          ordersApi.getByAccount(merchantAccountId),
+          invoicesApi.getByAccount(merchantAccountId),
+        ])
+      : await Promise.all([
+          ordersApi.getAll(),
+          invoicesApi.getAll(),
+        ]);
 
     const adaptedInvoices = rawInvoices.map(adaptInvoice);
     setInvoices(adaptedInvoices);
@@ -235,11 +255,17 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setInvoices(raw.map(adaptInvoice));
   }, []);
 
+  const loadPUApps = useCallback(async () => {
+    if (isMerchant) return; // PU apps are staff-only
+    const raw = await puApplicationsApi.getAll();
+    setPuApps(raw.map(adaptPUApp));
+  }, [isMerchant]);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadAccounts(), loadCatalogue(), loadOrdersAndInvoices()]);
+      await Promise.all([loadAccounts(), loadCatalogue(), loadOrdersAndInvoices(), loadPUApps()]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -247,7 +273,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [loadAccounts, loadCatalogue, loadOrdersAndInvoices]);
+  }, [loadAccounts, loadCatalogue, loadOrdersAndInvoices, loadPUApps]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -382,9 +408,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     } else if (status === 'delivered') {
       await ordersApi.markDelivered(orderId);
       await loadOrdersAndInvoices();
+    } else if (status === 'ready_to_dispatch') {
+      // accepted → ready_to_dispatch (BEING_PROCESSED)
+      await ordersApi.markBeingProcessed(orderId);
+      await loadOrdersAndInvoices();
     } else {
-      // accepted → ready_to_dispatch (BEING_PROCESSED): no dedicated endpoint
-      // Update optimistically in local state — backend has no intermediate step for this
       setOrders(prev => prev.map(o =>
         o.id === orderId
           ? { ...o, status, ...(dispatchDetails ? { dispatch: dispatchDetails } : {}) }
@@ -412,20 +440,17 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     await Promise.all([loadOrdersAndInvoices(), loadAccounts()]);
   }, [loadOrdersAndInvoices, loadAccounts]);
 
-  // ── PU apps (local only — no backend endpoint) ───────────────
+  // ── PU apps ──────────────────────────────────────────────────
 
-  const processPUApp = useCallback((
+  const processPUApp = useCallback(async (
     id: string,
     status: 'approved' | 'rejected',
     notes = '',
     by = 'manager',
   ) => {
-    setPuApps(prev => prev.map(a =>
-      a.id === id
-        ? { ...a, status, notes, processedBy: by, processedAt: new Date().toISOString().split('T')[0] }
-        : a
-    ));
-  }, []);
+    await puApplicationsApi.decide(id, { status, notes, processedBy: by });
+    await loadPUApps();
+  }, [loadPUApps]);
 
   // ── Derived helpers ──────────────────────────────────────────
 

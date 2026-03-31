@@ -78,7 +78,7 @@ public class CatalogueServiceImpl implements CatalogueService {
 
     @Override
     public List<CatalogueItem> search(String keyword) {
-        return catalogueItemRepository.findByDescriptionContainingIgnoreCase(keyword);
+        return catalogueItemRepository.findByItemIdContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
     }
 
     @Override
