@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { OrderStatusBadge, PaymentStatusBadge } from '@/components/ui/Badge';
 import { Modal, Field, Input, Select } from '@/components/ui/Modal';
 import { useAppData } from '@/context/AppDataContext';
+import { useAuth } from '@/context/AuthContext';
 import type { Order, TableColumn, OrderStatus } from '@/types';
 
 const STATUS_TABS: { label: string; value: OrderStatus | 'all' | 'incomplete' }[] = [
@@ -23,6 +24,7 @@ const INCOMPLETE_STATUSES: OrderStatus[] = ['submitted', 'accepted', 'ready_to_d
 
 export function OrderManagementPage() {
   const { orders, updateOrderStatus, markDelivered, recordPayment, getMerchantById } = useAppData();
+  const { user } = useAuth();
 
   const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -72,7 +74,7 @@ export function OrderManagementPage() {
         amount: parseFloat(paymentForm.amount),
         method: paymentForm.method as 'bank_transfer' | 'card' | 'cheque',
         receivedAt: new Date().toISOString().split('T')[0],
-        enteredBy: 'accountant',
+        enteredBy: user?.username ?? 'accountant',
         ref: paymentForm.ref,
       });
       setPaymentModal(null);

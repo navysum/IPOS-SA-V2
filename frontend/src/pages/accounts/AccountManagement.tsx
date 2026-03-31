@@ -65,7 +65,7 @@ function merchantToForm(m: Merchant): FormData {
 }
 
 export function AccountManagementPage() {
-  const { hasRole } = useAuth();
+  const { user, hasRole } = useAuth();
   const {
     merchants, addMerchant, updateMerchant, deleteMerchant,
     setMerchantStatus, recordPayment, getMerchantInvoices,
@@ -169,7 +169,7 @@ export function AccountManagementPage() {
         amount: amt,
         method: payMethod,
         receivedAt: new Date().toISOString().split('T')[0],
-        enteredBy: 'accountant',
+        enteredBy: user?.username ?? 'accountant',
         ref: payRef,
       });
       setPayAmount('');
@@ -265,9 +265,14 @@ export function AccountManagementPage() {
               <Button variant="secondary" size="sm" icon={<ShieldCheck size={13} />}
                 onClick={() => changeStatus(liveView!.id, 'normal')}>Restore to Normal</Button>
             )}
-            {liveView?.accountStatus === 'in_default' && isManager && (
+            {liveView?.accountStatus === 'in_default' && isManager && liveView.currentBalance <= 0 && (
               <Button variant="secondary" size="sm" icon={<ShieldCheck size={13} />}
                 onClick={() => changeStatus(liveView!.id, 'normal')}>Restore (Manager Auth)</Button>
+            )}
+            {liveView?.accountStatus === 'in_default' && isManager && liveView.currentBalance > 0 && (
+              <span style={{ fontSize: '12px', color: 'var(--color-danger)', padding: '6px 8px', fontWeight: 500 }}>
+                ⚠ Record full payment before restoring from In Default
+              </span>
             )}
             {liveView?.accountStatus === 'in_default' && !isManager && (
               <span style={{ fontSize: '12px', color: 'var(--color-danger)', padding: '6px 8px', fontWeight: 500 }}>
@@ -282,6 +287,12 @@ export function AccountManagementPage() {
               <Button variant="danger" size="sm" icon={<ShieldAlert size={13} />}
                 onClick={() => changeStatus(liveView!.id, 'in_default')}>Mark In Default</Button>
             )}
+            {liveView?.discountPlan.type !== 'fixed' || (liveView.discountPlan.type === 'fixed' && liveView.discountPlan.rate > 0) ? (
+              <Button variant="ghost" size="sm"
+                onClick={async () => {
+                  await updateMerchant(liveView!.id, { discountPlan: { type: 'fixed', rate: 0 } });
+                }}>Remove Discount Plan</Button>
+            ) : null}
             <Button size="sm" icon={<Edit2 size={13} />}
               onClick={() => { setViewId(null); openEdit(liveView!); }}>Edit</Button>
             <Button variant="danger" size="sm" icon={<Trash2 size={13} />}

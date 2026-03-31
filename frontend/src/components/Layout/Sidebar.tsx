@@ -12,7 +12,7 @@ interface NavItem {
   icon: React.ReactNode;
   to?: string;
   badge?: string;
-  children?: { label: string; to: string; badge?: string }[];
+  children?: { label: string; to: string; badge?: string; roles?: UserRole[] }[];
   roles?: UserRole[];
 }
 
@@ -29,12 +29,13 @@ const NAV_ITEMS: NavItem[] = [
   {
     label:'Orders', icon:<ShoppingCart size={17} />,
     children:[
-      { label:'All Orders',         to:'/orders' },
-      { label:'Place Order',         to:'/orders/new' },
-      { label:'Invoices',            to:'/orders/invoices' },
-      { label:'Merchant Balances',   to:'/orders/balance' },
-      { label:'Payment Records',     to:'/orders/payments' },
-      { label:'Debtor Reminders',    to:'/orders/reminders' },
+      { label:'All Orders',       to:'/orders' },
+      { label:'Place Order',      to:'/orders/new' },
+      { label:'Invoices',         to:'/orders/invoices' },
+      { label:'Merchant Balances',    to:'/orders/balance',            roles:['admin','manager','clerk'] },
+      { label:'Payment Records',      to:'/orders/payments',           roles:['admin','manager','clerk'] },
+      { label:'Debtor Reminders',     to:'/orders/reminders',          roles:['admin','manager'] },
+      { label:'Monthly Discounts',    to:'/orders/monthly-discounts',  roles:['admin','manager'] },
     ],
   },
   {
@@ -60,6 +61,8 @@ const NAV_ITEMS: NavItem[] = [
 
 function NavGroup({ item }: { item: NavItem }) {
   const [open, setOpen] = useState(false);
+  const { hasRole } = useAuth();
+  const visibleChildren = (item.children ?? []).filter(c => !c.roles || hasRole(...c.roles));
   return (
     <div>
       <button onClick={() => setOpen(v => !v)}
@@ -74,9 +77,9 @@ function NavGroup({ item }: { item: NavItem }) {
         <span style={{flex:1}}>{item.label}</span>
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
-      {open && item.children && (
+      {open && visibleChildren.length > 0 && (
         <div style={{ paddingLeft:'34px', paddingBottom:'4px' }}>
-          {item.children.map(child => (
+          {visibleChildren.map(child => (
             <NavLink key={child.to} to={child.to}
               style={({ isActive }) => ({
                 display:'flex', alignItems:'center', justifyContent:'space-between',

@@ -15,6 +15,7 @@ import { RemindersPage }            from '@/pages/orders/RemindersPage';
 import { MerchantBalancePage }      from '@/pages/orders/MerchantBalancePage';
 import { PlaceOrderPage }           from '@/pages/orders/PlaceOrderPage';
 import { PaymentsPage }             from '@/pages/orders/PaymentsPage';
+import { MonthlyDiscountsPage }     from '@/pages/orders/MonthlyDiscountsPage';
 import { AccountManagementPage }    from '@/pages/accounts/AccountManagement';
 import { UserManagementPage }       from '@/pages/accounts/UserManagement';
 import { PUApplicationsPage }       from '@/pages/accounts/PUApplicationsPage';
@@ -70,13 +71,22 @@ function AppRoutes() {
       <Route element={<AppShell />}>
         {/* All authenticated users */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard"           element={<DashboardPage />} />
-          <Route path="/orders"              element={<OrderManagementPage />} />
-          <Route path="/orders/new"          element={<PlaceOrderPage />} />
-          <Route path="/orders/invoices"     element={<InvoicesPage />} />
-          <Route path="/orders/payments"     element={<PaymentsPage />} />
-          <Route path="/orders/reminders"    element={<RemindersPage />} />
-          <Route path="/orders/balance"      element={<MerchantBalancePage />} />
+          <Route path="/dashboard"       element={<DashboardPage />} />
+          <Route path="/orders"          element={<OrderManagementPage />} />
+          <Route path="/orders/new"      element={<PlaceOrderPage />} />
+          <Route path="/orders/invoices" element={<InvoicesPage />} />
+        </Route>
+
+        {/* Staff only — not for merchants */}
+        <Route element={<ProtectedRoute roles={['admin','manager','clerk','warehouse','delivery']} />}>
+          <Route path="/orders/balance"  element={<MerchantBalancePage />} />
+          <Route path="/orders/payments" element={<PaymentsPage />} />
+        </Route>
+
+        {/* Management staff only */}
+        <Route element={<ProtectedRoute roles={['admin','manager']} />}>
+          <Route path="/orders/reminders"         element={<RemindersPage />} />
+          <Route path="/orders/monthly-discounts" element={<MonthlyDiscountsPage />} />
         </Route>
 
         {/* Admin only — full system access */}

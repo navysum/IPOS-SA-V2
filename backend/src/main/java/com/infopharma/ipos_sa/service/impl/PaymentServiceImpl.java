@@ -62,9 +62,11 @@ public class PaymentServiceImpl implements PaymentService {
         account.setBalance(account.getBalance().subtract(request.getAmountPaid()));
 
         // Auto-restore SUSPENDED account when balance cleared
-        if (account.getBalance().compareTo(java.math.BigDecimal.ZERO) <= 0
-                && account.getAccountStatus() == UserAccount.AccountStatus.SUSPENDED) {
-            account.setAccountStatus(UserAccount.AccountStatus.NORMAL);
+        if (account.getBalance().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            account.setPaymentDueDate(null);
+            if (account.getAccountStatus() == UserAccount.AccountStatus.SUSPENDED) {
+                account.setAccountStatus(UserAccount.AccountStatus.NORMAL);
+            }
         }
         // IN_DEFAULT cannot be auto-restored — manager only
         userAccountRepository.save(account);

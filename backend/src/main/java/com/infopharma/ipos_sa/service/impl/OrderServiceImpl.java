@@ -109,6 +109,11 @@ public class OrderServiceImpl implements OrderService {
 
         // Update merchant balance (discounted total increases the balance owed)
         account.setBalance(account.getBalance().add(total));
+
+        // Set payment due date to 30 days from today if not already set
+        if (account.getPaymentDueDate() == null) {
+            account.setPaymentDueDate(LocalDate.now().plusDays(30));
+        }
         userAccountRepository.save(account);
 
         return savedOrder;
@@ -134,6 +139,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> findIncomplete() {
         return orderRepository.findByStatusNot(Order.OrderStatus.DELIVERED);
+    }
+
+    @Override
+    @Transactional
+    public Order markBeingProcessed(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found: " + orderId));
+        order.setStatus(Order.OrderStatus.BEING_PROCESSED);
+        return orderRepository.save(order);
     }
 
     @Override
