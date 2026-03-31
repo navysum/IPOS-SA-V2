@@ -92,7 +92,7 @@ export const puApplicationsApi = {
 export const monthlyDiscountsApi = {
   getAll:    ()                => api.get<any[]>('/monthly-discounts'),
   getPending:()                => api.get<any[]>('/monthly-discounts/pending'),
-  calculate: (month: string)   => api.post<any[]>(`/monthly-discounts/calculate?month=${month}`),
+  calculate: (month: string) => api.post<any[]>(`/monthly-discounts/calculate?month=${month}`, {}),
   settle:    (id: number, body: { settlementMethod: string }) =>
     api.put<any>(`/monthly-discounts/${id}/settle`, body),
 };
