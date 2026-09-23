@@ -1,9 +1,19 @@
 # IPOS-SA — InfoPharma Ordering System (Server Application)
 
-Full-stack project:  
-- **frontend/** — React 18 + TypeScript + Vite  
-- **backend/**  — Spring Boot 4 + PostgreSQL + JPA
-- **Supabase Password/** - ***REMOVED***
+A university team project by Neil and Craig: the server application of a pharmacy
+wholesale ordering system, covering accounts, merchants, the catalogue and stock,
+orders and dispatch, invoices and payments, discount plans and reports.
+
+**Status (23 Sep 2026): complete (v1.29, 31 Mar 2026). No longer developed.** The
+hosted demo on Vercel has been taken down, so run it locally as shown below.
+
+Full-stack project:
+- **frontend/**: React 18 + TypeScript + Vite
+- **backend/**: Spring Boot 4 + PostgreSQL + JPA
+- **Integration/**: API reference and integration guides for the partner
+  subsystems (PU, WH)
+- **Resources/**: the assignment brief, specification and marking sheet
+
 ---
 
 
@@ -75,7 +85,9 @@ Opens at **http://localhost:5173**. The Vite dev server proxies all `/api/*` req
 
 ---
 
-## Login Credentials
+## Demo Login Credentials
+
+These are demo accounts seeded for local testing and marking. They are not real credentials.
 
 ### Staff (seeded via Spring Boot on startup — add to data.sql if needed)
 
@@ -102,10 +114,13 @@ Opens at **http://localhost:5173**. The Vite dev server proxies all `/api/*` req
 ## Project Structure
 
 ```
-IPOS-SA/
+IPOS-SA-V2/
+├── docker-compose.yml               PostgreSQL for local development
+├── Integration/                     API_Reference, PU and WH integration guides
+├── Resources/                       brief, specification, marking sheet (PDF)
 ├── backend/                         Spring Boot API
 │   ├── src/main/java/com/infopharma/ipos_sa/
-│   │   ├── config/                  CorsConfig, MapperConfig
+│   │   ├── config/                  CorsConfig, MapperConfig, DatabaseSeeder
 │   │   ├── controller/              REST controllers (7 controllers)
 │   │   ├── dto/                     Request/Response shapes
 │   │   ├── entity/                  JPA entities
